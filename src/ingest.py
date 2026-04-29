@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
-from langchain_google_genai import GoogleGenerativeAI
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_core.documents import Document
 from langchain_postgres import PGVector
 
@@ -19,6 +19,7 @@ docs = loader.load()
 
 splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=150)
 chunks = splitter.split_documents(docs)
+print(f"Total de chunks: {len(chunks)}")
 
 if not chunks:
     raise RuntimeError("No chunks found")
@@ -36,7 +37,7 @@ ids = [f"doc-{i}" for i in range(len(enriched))]
 embeddings = OpenAIEmbeddings(model=os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"))
 
 # Google embeddings
-# embeddings = GoogleGenerativeAI(model=os.getenv("GOOGLE_EMBEDDING_MODEL", "models/embedding-001"))
+# embeddings = GoogleGenerativeAIEmbeddings(model=os.getenv("GOOGLE_EMBEDDING_MODEL", "models/embedding-001"))
 
 store = PGVector(
     embeddings = embeddings,
@@ -45,4 +46,5 @@ store = PGVector(
     use_jsonb = True
 )
 
-print(f"Total de chunks: {len(chunks)}")
+store.add_documents(documents=enriched, ids=ids)
+print(f"Total de documentos adicionados: {len(enriched)}")
